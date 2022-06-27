@@ -1,0 +1,84 @@
+<html>
+  <h1>reCAPTCHA v3 Demo</h1>
+  <input type="text" id="hello" value="Hello World" />
+  <button type="button" id="send_button">Send</button>
+  <button type="button" id="send_button2" onclick="onClick(event);">Send2</button>
+  <hr />
+  <div id="result"></div>
+
+  <script src="https://www.google.com/recaptcha/api.js?render=6LeUOKIgAAAAAM_Eb-5GlL4zW4-23A8wDgqXrasc"></script>
+  <script>
+    // reCapcha token
+    let g_token = "";
+
+    // Reset token 90 seconds
+    setInterval(function () {
+      grecaptcha.ready(function () {
+        grecaptcha
+          .execute("6LeUOKIgAAAAAM_Eb-5GlL4zW4-23A8wDgqXrasc", {
+            action: "request_call_back",
+          })
+          .then(function (e) {
+            // $("#YOUR_FIELD_NAME_ID").val(e);
+            console.log("new token =", e);
+            g_token = e;
+          });
+      });
+    }, 10 * 1000);
+
+    function showResult(text) {
+      document.querySelector("#result").innerHTML = text;
+    }
+
+    function onClick(e) {
+      console.log('onClick');
+      e.preventDefault();
+      grecaptcha.ready(function () {
+        grecaptcha
+          .execute("6LeUOKIgAAAAAM_Eb-5GlL4zW4-23A8wDgqXrasc", {
+            action: "submit",
+          })
+          .then(function (token) {
+            // Add your logic to submit to your backend server here.
+            console.log('onclick token ', token);
+            g_token = token;
+            handleClick()();
+          });
+      });
+    }
+
+    function handleClick() {
+      return function () {
+        var hello = document.querySelector("#hello").value;
+        var data = {
+          hello: hello,
+          token: g_token,
+        };
+
+        fetch("/send", {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          method: "post",
+          body: JSON.stringify(data),
+        })
+          .then((response) => response.text())
+          .then((text) => showResult(text))
+          .catch((error) => showResult(error));
+      };
+    }
+
+    grecaptcha.ready(function () {
+      grecaptcha
+        .execute("6LeUOKIgAAAAAM_Eb-5GlL4zW4-23A8wDgqXrasc", { action: "demo" })
+        .then(function (token) {
+          console.log("token", token);
+          g_token = token;
+          document
+            .querySelector("#send_button")
+            .addEventListener("click", handleClick());
+        });
+    });
+  </script>
+</html>
